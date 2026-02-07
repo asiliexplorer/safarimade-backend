@@ -1,0 +1,25 @@
+name: Deploy to VPS (IP Based)
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to VPS via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          port: 22
+          script: |
+            cd /root/safari-server
+            git pull origin main
+            docker-compose down
+            docker-compose up -d --build
