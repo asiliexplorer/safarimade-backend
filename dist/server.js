@@ -1,18 +1,76 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-const mongoose_1 = __importDefault(require("mongoose"));
 const app_1 = __importDefault(require("./app"));
+const mongoose_1 = require("./config/mongoose");
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || "";
-mongoose_1.default
-    .connect(MONGO_URI)
-    .then(() => {
-    console.log("✅ MongoDB Connected");
+const MONGO_URI = process.env.MONGO_URI;
+if (!MONGO_URI) {
+    throw new Error("MONGO_URI is not set in the environment");
+}
+(0, mongoose_1.connectDB)(MONGO_URI)
+    .then(async () => {
+    // --- Ensure all collections and indexes are created ---
+    const { UserModel } = await Promise.resolve().then(() => __importStar(require("./modules/auth/auth.model")));
+    const ContactModel = (await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/contact/contact.model")))).default;
+    const FaqModel = (await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/faq/faq.model")))).default;
+    const FooterModel = (await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/footer/footer.model")))).default;
+    const { ReviewModel } = await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/reviews/review.model")));
+    const { SectionModel } = await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/sections/section.model")));
+    await Promise.all([
+        UserModel.createCollection(),
+        ContactModel.createCollection(),
+        FaqModel.createCollection(),
+        FooterModel.createCollection(),
+        ReviewModel.createCollection(),
+        SectionModel.createCollection(),
+    ]);
+    await Promise.all([
+        UserModel.init(),
+        ContactModel.init(),
+        FaqModel.init(),
+        FooterModel.init(),
+        ReviewModel.init(),
+        SectionModel.init(),
+    ]);
+    // --- End ensure collections/indexes ---
     app_1.default.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
 })
     .catch((err) => console.error("❌ DB Connection Failed:", err));

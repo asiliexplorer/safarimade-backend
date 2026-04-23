@@ -18,7 +18,7 @@ const section_routes_1 = __importDefault(require("./modules/siteSetting/sections
 const review_routes_1 = __importDefault(require("./modules/siteSetting/reviews/review.routes"));
 const app = (0, express_1.default)();
 const corsOptions = {
-    origin: "http://localhost:3000",
+    origin: ["http://localhost:3000", "https://safaritripbooking.com"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

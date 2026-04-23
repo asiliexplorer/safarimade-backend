@@ -15,7 +15,7 @@ import reviewRoutes from "./modules/siteSetting/reviews/review.routes";
 const app = express();
 
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://safaritripbooking.com"],
+  origin: ["http://localhost:3000", "https://safarimade-frontend.vercel.app/"],
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

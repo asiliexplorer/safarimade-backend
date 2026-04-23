@@ -2,18 +2,18 @@
 import dotenv from "dotenv";
 dotenv.config();  
 
-import mongoose from "mongoose";
 import app from "./app";
+import { connectDB } from "./config/mongoose";
 
 const PORT = process.env.PORT || 4000;
-const MONGO_URI = process.env.MONGO_URI || "";
+const MONGO_URI = process.env.MONGO_URI;
 
-mongoose
+if (!MONGO_URI) {
+  throw new Error("MONGO_URI is not set in the environment");
+}
 
-  .connect(MONGO_URI)
+connectDB(MONGO_URI)
   .then(async () => {
-    console.log("✅ MongoDB Connected");
-
     // --- Ensure all collections and indexes are created ---
     const { UserModel } = await import("./modules/auth/auth.model");
     const ContactModel = (await import("./modules/siteSetting/contact/contact.model")).default;
