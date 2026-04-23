@@ -14,8 +14,38 @@ import reviewRoutes from "./modules/siteSetting/reviews/review.routes";
 
 const app = express();
 
+function normalizeOrigin(origin: string): string {
+  return origin.trim().replace(/\/$/, "");
+}
+
+const defaultAllowedOrigins = [
+  "http://localhost:3000",
+  "https://safarimade-frontend.vercel.app",
+  "https://safaritripbooking.com",
+];
+
+const envAllowedOrigins = (process.env.CORS_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins].map(normalizeOrigin))];
+
 const corsOptions = {
-  origin: ["http://localhost:3000", "https://safarimade-frontend.vercel.app/"],
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (allowedOrigins.includes(normalizedOrigin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error("Not allowed by CORS"));
+  },
   credentials: true,
   allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -24,6 +54,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.use(helmet());
 app.use(morgan("dev"));
