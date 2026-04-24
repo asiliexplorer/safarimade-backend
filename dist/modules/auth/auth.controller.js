@@ -24,6 +24,16 @@ class AuthController {
             next(err);
         }
     }
+    static async getUserById(req, res, next) {
+        try {
+            const userId = req.params.id;
+            const user = await auth_service_1.AuthService.getUserById(userId);
+            res.json({ success: true, data: user });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
     static async listCompanies(req, res, next) {
         try {
             const status = req.query.status ? String(req.query.status) : undefined;
@@ -66,6 +76,29 @@ class AuthController {
             const { status } = req.body;
             const updated = await auth_service_1.AuthService.setCompanyStatus(companyId, status);
             res.json({ success: true, data: updated });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    static async updateUser(req, res, next) {
+        try {
+            const userId = req.params.id;
+            const updates = req.body;
+            const requestingUser = req.user;
+            const updated = await auth_service_1.AuthService.updateUser(userId, updates, requestingUser);
+            res.json({ success: true, data: updated });
+        }
+        catch (err) {
+            next(err);
+        }
+    }
+    static async deleteUser(req, res, next) {
+        try {
+            const userId = req.params.id;
+            const requestingUser = req.user;
+            const deleted = await auth_service_1.AuthService.deleteUser(userId, requestingUser);
+            res.json({ success: true, data: deleted });
         }
         catch (err) {
             next(err);

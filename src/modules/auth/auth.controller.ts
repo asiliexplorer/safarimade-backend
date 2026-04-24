@@ -23,6 +23,16 @@ export class AuthController {
     }
   }
 
+  static async getUserById(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id;
+      const user = await AuthService.getUserById(userId);
+      res.json({ success: true, data: user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async listCompanies(req: Request, res: Response, next: NextFunction) {
     try {
       const status = req.query.status ? String(req.query.status) : undefined;
@@ -71,6 +81,31 @@ export class AuthController {
       const { status } = req.body;
       const updated = await AuthService.setCompanyStatus(companyId, status);
       res.json({ success: true, data: updated });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async updateUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id;
+      const updates = req.body;
+      const requestingUser = (req as any).user;
+
+      const updated = await AuthService.updateUser(userId, updates, requestingUser);
+      res.json({ success: true, data: updated });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  static async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.params.id;
+      const requestingUser = (req as any).user;
+
+      const deleted = await AuthService.deleteUser(userId, requestingUser);
+      res.json({ success: true, data: deleted });
     } catch (err) {
       next(err);
     }

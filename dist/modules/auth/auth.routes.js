@@ -394,4 +394,7 @@ router.get("/me", authMiddleware_1.authMiddleware, auth_controller_1.AuthControl
 router.post("/company/:id/status", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.setCompanyStatus);
 router.get("/users", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.listUsers);
 router.get("/users/companies", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.listCompanies);
+router.get("/users/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.getUserById);
+router.put("/users/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_validator_1.updateUserValidator, auth_controller_1.AuthController.updateUser);
+router.delete("/users/:id", authMiddleware_1.authMiddleware, auth_controller_1.AuthController.deleteUser);
 exports.default = router;

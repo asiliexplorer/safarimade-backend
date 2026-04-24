@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.registerValidator = registerValidator;
 exports.loginValidator = loginValidator;
+exports.updateUserValidator = updateUserValidator;
 const joi_1 = __importDefault(require("joi"));
 const registerSchema = joi_1.default.object({
     email: joi_1.default.string().email().required(),
@@ -16,6 +17,11 @@ const loginSchema = joi_1.default.object({
     email: joi_1.default.string().email().required(),
     password: joi_1.default.string().required(),
 });
+const updateUserSchema = joi_1.default.object({
+    name: joi_1.default.string().optional(),
+    email: joi_1.default.string().email().optional(),
+    password: joi_1.default.string().min(6).optional(),
+}).min(1);
 function registerValidator(req, res, next) {
     const { error } = registerSchema.validate(req.body);
     if (error)
@@ -24,6 +30,12 @@ function registerValidator(req, res, next) {
 }
 function loginValidator(req, res, next) {
     const { error } = loginSchema.validate(req.body);
+    if (error)
+        return res.status(400).json({ success: false, error: error.message });
+    next();
+}
+function updateUserValidator(req, res, next) {
+    const { error } = updateUserSchema.validate(req.body);
     if (error)
         return res.status(400).json({ success: false, error: error.message });
     next();

@@ -2,7 +2,7 @@ import express from "express";
 import { authMiddleware } from "../../common/middleware/authMiddleware";
 import { roleMiddleware } from "../../common/middleware/roleMiddleware";
 import { AuthController } from "./auth.controller";
-import { loginValidator, registerValidator } from "./auth.validator";
+import { loginValidator, registerValidator, updateUserValidator } from "./auth.validator";
 
 const router = express.Router();
 
@@ -423,6 +423,27 @@ router.get(
   authMiddleware,
   roleMiddleware("admin"),
   AuthController.listCompanies
+);
+
+router.get(
+  "/users/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  AuthController.getUserById
+);
+
+router.put(
+  "/users/:id",
+  authMiddleware,
+  roleMiddleware("admin"),
+  updateUserValidator,
+  AuthController.updateUser
+);
+
+router.delete(
+  "/users/:id",
+  authMiddleware,
+  AuthController.deleteUser
 );
 
 export default router;

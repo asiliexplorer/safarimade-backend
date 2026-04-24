@@ -32,4 +32,7 @@ exports.UserStore = {
     async count(filters = {}) {
         return await auth_model_1.UserModel.countDocuments(filters);
     },
+    async delete(id) {
+        return await auth_model_1.UserModel.findByIdAndDelete(id);
+    },
 };

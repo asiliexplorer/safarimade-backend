@@ -131,11 +131,91 @@ export class AuthService {
     };
   }
 
+  static async getUserById(userId: string) {
+    const user = await UserStore.findById(userId);
+    if (!user) throw new Error("User not found");
+    return {
+      _id: user._id,
+      id: user._id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      companyStatus: user.companyStatus,
+      createdAt: user.createdAt,
+    };
+  }
+
   static async setCompanyStatus(companyId: string, status: string) {
     const updated = await UserStore.update(companyId, {
       companyStatus: status,
     });
     if (!updated) throw new Error("Company not found");
     return updated;
+  }
+
+  static async updateUser(
+    userId: string,
+    updates: { name?: string; email?: string; password?: string },
+    requestingUser?: { id: string; role: string }
+  ) {
+    const user = await UserStore.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    // Only allow user to edit themselves or admin to edit anyone
+    if (requestingUser && requestingUser.id !== userId && requestingUser.role !== "admin") {
+      throw new Error("Unauthorized: can only edit your own profile");
+    }
+
+    const updateData: any = {};
+
+    if (updates.name !== undefined) {
+      updateData.name = updates.name;
+    }
+
+    if (updates.email !== undefined) {
+      const existing = await UserStore.findByEmail(updates.email);
+      if (existing && existing._id.toString() !== userId) {
+        throw new Error("Email already in use");
+      }
+      updateData.email = updates.email;
+    }
+
+    if (updates.password !== undefined) {
+      const salt = await bcrypt.genSalt(10);
+      updateData.passwordHash = await bcrypt.hash(updates.password, salt);
+    }
+
+    const updated = await UserStore.update(userId, updateData);
+    if (!updated) throw new Error("Failed to update user");
+
+    return {
+      id: updated._id,
+      email: updated.email,
+      name: updated.name,
+      role: updated.role,
+      companyStatus: updated.companyStatus,
+    };
+  }
+
+  static async deleteUser(
+    userId: string,
+    requestingUser?: { id: string; role: string }
+  ) {
+    const user = await UserStore.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    // Only allow user to delete themselves or admin to delete anyone
+    if (requestingUser && requestingUser.id !== userId && requestingUser.role !== "admin") {
+      throw new Error("Unauthorized: can only delete your own account");
+    }
+
+    const deleted = await UserStore.delete(userId);
+    if (!deleted) throw new Error("Failed to delete user");
+
+    return {
+      id: deleted._id,
+      email: deleted.email,
+      message: "User deleted successfully",
+    };
   }
 }

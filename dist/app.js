@@ -17,8 +17,32 @@ const faq_routes_1 = __importDefault(require("./modules/siteSetting/faq/faq.rout
 const section_routes_1 = __importDefault(require("./modules/siteSetting/sections/section.routes"));
 const review_routes_1 = __importDefault(require("./modules/siteSetting/reviews/review.routes"));
 const app = (0, express_1.default)();
+function normalizeOrigin(origin) {
+    return origin.trim().replace(/\/$/, "");
+}
+const defaultAllowedOrigins = [
+    "http://localhost:3000",
+    "https://safarimade-frontend.vercel.app",
+    "https://safaritripbooking.com",
+];
+const envAllowedOrigins = (process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins].map(normalizeOrigin))];
 const corsOptions = {
-    origin: ["http://localhost:3000", "https://safaritripbooking.com"],
+    origin: (origin, callback) => {
+        if (!origin) {
+            callback(null, true);
+            return;
+        }
+        const normalizedOrigin = normalizeOrigin(origin);
+        if (allowedOrigins.includes(normalizedOrigin)) {
+            callback(null, true);
+            return;
+        }
+        callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization", "Accept"],
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

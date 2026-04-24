@@ -34,4 +34,8 @@ export const UserStore = {
   async count(filters: any = {}) {
     return await UserModel.countDocuments(filters);
   },
+
+  async delete(id: string) {
+    return await UserModel.findByIdAndDelete(id);
+  },
 };
