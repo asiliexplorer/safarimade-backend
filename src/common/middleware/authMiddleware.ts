@@ -41,16 +41,10 @@ export async function authMiddleware(
 
   try {
     const decoded = jwt.decode(token);
-    console.log(">>> DECODED (no-verify):", decoded);
 
     // verify (this throws if invalid)
     const payload = jwt.verify(token, secret) as any;
-    console.log(">>> VERIFIED PAYLOAD:", {
-      sub: payload.sub,
-      id: payload.id,
-      email: payload.email,
-      role: payload.role,
-    });
+   
 
     // support both `sub` (preferred) and `id` (if any)
     const userId = String(payload.sub || payload.id);
@@ -72,7 +66,6 @@ export async function authMiddleware(
       email: user.email,
       name: user.name,
       role: user.role,
-      companyStatus: user.companyStatus,
     };
 
     next();

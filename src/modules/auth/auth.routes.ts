@@ -385,18 +385,7 @@ const router = express.Router();
    Keep swagger blocks above this area
 =========================== */
 
-router.post("/register/customer", registerValidator, (req, res, next) => {
-  req.body.role = "customer";
-  return AuthController.register(req, res, next);
-});
-
-router.post("/register/company", registerValidator, (req, res, next) => {
-  req.body.role = "company";
-  return AuthController.register(req, res, next);
-});
-
 router.post("/register/admin", registerValidator, (req, res, next) => {
-  req.body.role = "admin";
   return AuthController.register(req, res, next);
 });
 
@@ -404,25 +393,11 @@ router.post("/login", loginValidator, AuthController.login);
 
 router.get("/me", authMiddleware, AuthController.me);
 
-router.post(
-  "/company/:id/status",
-  authMiddleware,
-  roleMiddleware("admin"),
-  AuthController.setCompanyStatus
-);
-
 router.get(
   "/users",
   authMiddleware,
   roleMiddleware("admin"),
   AuthController.listUsers
-);
-
-router.get(
-  "/users/companies",
-  authMiddleware,
-  roleMiddleware("admin"),
-  AuthController.listCompanies
 );
 
 router.get(

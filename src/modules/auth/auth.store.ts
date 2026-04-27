@@ -14,10 +14,6 @@ export const UserStore = {
     return await UserModel.findById(id);
   },
 
-  async findCompaniesByStatus(status: string) {
-    return await UserModel.find({ role: "company", companyStatus: status });
-  },
-
   async update(id: string, patch: Partial<any>) {
     return await UserModel.findByIdAndUpdate(id, patch, { new: true });
   },

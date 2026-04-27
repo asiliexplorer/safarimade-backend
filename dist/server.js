@@ -54,6 +54,7 @@ if (!MONGO_URI) {
     const FooterModel = (await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/footer/footer.model")))).default;
     const { ReviewModel } = await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/reviews/review.model")));
     const { SectionModel } = await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/sections/section.model")));
+    const TravelProposalModel = (await Promise.resolve().then(() => __importStar(require("./modules/siteSetting/travelProposal/travelProposal.model")))).default;
     await Promise.all([
         UserModel.createCollection(),
         ContactModel.createCollection(),
@@ -61,6 +62,7 @@ if (!MONGO_URI) {
         FooterModel.createCollection(),
         ReviewModel.createCollection(),
         SectionModel.createCollection(),
+        TravelProposalModel.createCollection(),
     ]);
     await Promise.all([
         UserModel.init(),
@@ -69,6 +71,7 @@ if (!MONGO_URI) {
         FooterModel.init(),
         ReviewModel.init(),
         SectionModel.init(),
+        TravelProposalModel.init(),
     ]);
     // --- End ensure collections/indexes ---
     app_1.default.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

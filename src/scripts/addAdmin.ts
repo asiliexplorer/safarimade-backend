@@ -28,21 +28,19 @@ async function main() {
 
   await mongoose.connect(mongoUri);
 
-  const passwordHash = await bcrypt.hash(password, 10);
   const existingUser = await UserModel.findOne({ email });
 
   if (existingUser) {
-    existingUser.passwordHash = passwordHash;
+    existingUser.password = password;
     existingUser.role = "admin";
     existingUser.name = name;
-    existingUser.companyStatus = undefined;
     await existingUser.save();
 
     console.log(`Updated existing user as admin: ${email}`);
   } else {
     await UserModel.create({
       email,
-      passwordHash,
+      password,
       name,
       role: "admin",
     });

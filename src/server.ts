@@ -21,6 +21,8 @@ connectDB(MONGO_URI)
     const FooterModel = (await import("./modules/siteSetting/footer/footer.model")).default;
     const { ReviewModel } = await import("./modules/siteSetting/reviews/review.model");
     const { SectionModel } = await import("./modules/siteSetting/sections/section.model");
+    const TravelProposalModel =
+      (await import("./modules/siteSetting/travelProposal/travelProposal.model")).default;
 
     await Promise.all([
       UserModel.createCollection(),
@@ -29,6 +31,7 @@ connectDB(MONGO_URI)
       FooterModel.createCollection(),
       ReviewModel.createCollection(),
       SectionModel.createCollection(),
+      TravelProposalModel.createCollection(),
     ]);
     await Promise.all([
       UserModel.init(),
@@ -37,6 +40,7 @@ connectDB(MONGO_URI)
       FooterModel.init(),
       ReviewModel.init(),
       SectionModel.init(),
+      TravelProposalModel.init(),
     ]);
     // --- End ensure collections/indexes ---
 

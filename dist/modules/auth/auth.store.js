@@ -13,9 +13,6 @@ exports.UserStore = {
     async findById(id) {
         return await auth_model_1.UserModel.findById(id);
     },
-    async findCompaniesByStatus(status) {
-        return await auth_model_1.UserModel.find({ role: "company", companyStatus: status });
-    },
     async update(id, patch) {
         return await auth_model_1.UserModel.findByIdAndUpdate(id, patch, { new: true });
     },

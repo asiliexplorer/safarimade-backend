@@ -32,75 +32,49 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthService = void 0;
 // src/modules/auth/auth.service.ts
 const jwt = __importStar(require("jsonwebtoken"));
-const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const auth_store_1 = require("./auth.store");
-const jwt_1 = require("../../common/jwt"); // ensure this file exists
+const jwt_1 = require("../../common/jwt");
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || "1d";
 class AuthService {
-    static async register(email, password, name, role) {
+    static async register(email, password, name) {
         const existing = await auth_store_1.UserStore.findByEmail(email);
         if (existing)
             throw new Error("User already exists");
-        const salt = await bcryptjs_1.default.genSalt(10);
-        const passwordHash = await bcryptjs_1.default.hash(password, salt);
         const user = await auth_store_1.UserStore.create({
             email,
-            passwordHash,
+            password,
             name,
-            role,
-            companyStatus: role === "company" ? "pending" : undefined,
+            role: "admin",
         });
         return {
             id: user._id,
             email: user.email,
             name: user.name,
             role: user.role,
-            companyStatus: user.companyStatus,
         };
     }
     static async login(email, password) {
         const user = await auth_store_1.UserStore.findByEmail(email);
         if (!user)
             throw new Error("Invalid credentials");
-        if (user.role === "company" && user.companyStatus === "rejected") {
-            throw new Error("Your company account was rejected by admin");
-        }
-        const match = await bcryptjs_1.default.compare(password, user.passwordHash);
-        if (!match)
+        const storedPassword = user.password;
+        if (!storedPassword || password !== storedPassword) {
             throw new Error("Invalid credentials");
-        // get secret at runtime
+        }
         const secret = (0, jwt_1.getJwtSecret)();
-        // Make sure secret exists; this guarantees correct typing for jwt.sign overload
         if (!secret) {
             throw new Error("JWT secret is not configured (getJwtSecret returned empty)");
         }
-        // Cast to jwt.Secret for clarity (may be unused by TS if we cast sign to any below)
         const typedSecret = secret;
-        // --- IMPORTANT: use a local cast to `any` for jwt.sign so TS doesn't try to match
-        // the overloaded signatures that are causing the compiler error in your environment.
         const token = jwt.sign({
             sub: String(user._id),
             email: user.email,
             role: user.role,
-            companyStatus: user.companyStatus,
         }, typedSecret, { expiresIn: JWT_EXPIRES_IN });
-        // Masked logging for debug (safe): *DO NOT* enable full token/secret in production logs
-        try {
-            console.log(">>> ISSUED TOKEN (prefix):", (token ?? "").substring(0, 40) + "...");
-            console.log(">>> SIGN SECRET (masked):", secret
-                ? `${String(secret).slice(0, 4)}...${String(secret).slice(-4)}`
-                : "(empty)");
-        }
-        catch (e) {
-            /* ignore logging error */
-        }
         return {
             token,
             user: {
@@ -108,30 +82,22 @@ class AuthService {
                 email: user.email,
                 name: user.name,
                 role: user.role,
-                companyStatus: user.companyStatus,
             },
         };
     }
     static async listUsers(filters = {}, options = {}) {
-        const projection = { passwordHash: 0, __v: 0 };
+        const projection = { __v: 0 };
         const users = await auth_store_1.UserStore.findMany(filters, projection, options);
         const total = await auth_store_1.UserStore.count(filters);
+        const items = users.map((user) => {
+            const plain = typeof user?.toObject === "function" ? user.toObject() : user;
+            return {
+                ...plain,
+                password: plain?.password ?? user?.password,
+            };
+        });
         return {
-            items: users,
-            total,
-            limit: options.limit || 0,
-            skip: options.skip || 0,
-        };
-    }
-    static async listCompanies(status, options = {}) {
-        const filters = { role: "company" };
-        if (status)
-            filters.companyStatus = status;
-        const projection = { passwordHash: 0, __v: 0 };
-        const companies = await auth_store_1.UserStore.findMany(filters, projection, options);
-        const total = await auth_store_1.UserStore.count(filters);
-        return {
-            items: companies,
+            items,
             total,
             limit: options.limit || 0,
             skip: options.skip || 0,
@@ -147,17 +113,9 @@ class AuthService {
             email: user.email,
             name: user.name,
             role: user.role,
-            companyStatus: user.companyStatus,
+            password: user.password,
             createdAt: user.createdAt,
         };
-    }
-    static async setCompanyStatus(companyId, status) {
-        const updated = await auth_store_1.UserStore.update(companyId, {
-            companyStatus: status,
-        });
-        if (!updated)
-            throw new Error("Company not found");
-        return updated;
     }
     static async updateUser(userId, updates, requestingUser) {
         const user = await auth_store_1.UserStore.findById(userId);
@@ -179,8 +137,7 @@ class AuthService {
             updateData.email = updates.email;
         }
         if (updates.password !== undefined) {
-            const salt = await bcryptjs_1.default.genSalt(10);
-            updateData.passwordHash = await bcryptjs_1.default.hash(updates.password, salt);
+            updateData.password = updates.password;
         }
         const updated = await auth_store_1.UserStore.update(userId, updateData);
         if (!updated)
@@ -190,7 +147,6 @@ class AuthService {
             email: updated.email,
             name: updated.name,
             role: updated.role,
-            companyStatus: updated.companyStatus,
         };
     }
     static async deleteUser(userId, requestingUser) {

@@ -377,23 +377,12 @@ const router = express_1.default.Router();
    ACTUAL ROUTES (below)
    Keep swagger blocks above this area
 =========================== */
-router.post("/register/customer", auth_validator_1.registerValidator, (req, res, next) => {
-    req.body.role = "customer";
-    return auth_controller_1.AuthController.register(req, res, next);
-});
-router.post("/register/company", auth_validator_1.registerValidator, (req, res, next) => {
-    req.body.role = "company";
-    return auth_controller_1.AuthController.register(req, res, next);
-});
 router.post("/register/admin", auth_validator_1.registerValidator, (req, res, next) => {
-    req.body.role = "admin";
     return auth_controller_1.AuthController.register(req, res, next);
 });
 router.post("/login", auth_validator_1.loginValidator, auth_controller_1.AuthController.login);
 router.get("/me", authMiddleware_1.authMiddleware, auth_controller_1.AuthController.me);
-router.post("/company/:id/status", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.setCompanyStatus);
 router.get("/users", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.listUsers);
-router.get("/users/companies", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.listCompanies);
 router.get("/users/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_controller_1.AuthController.getUserById);
 router.put("/users/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), auth_validator_1.updateUserValidator, auth_controller_1.AuthController.updateUser);
 router.delete("/users/:id", authMiddleware_1.authMiddleware, auth_controller_1.AuthController.deleteUser);
