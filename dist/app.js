@@ -18,6 +18,7 @@ const section_routes_1 = __importDefault(require("./modules/siteSetting/sections
 const review_routes_1 = __importDefault(require("./modules/siteSetting/reviews/review.routes"));
 const travelProposal_routes_1 = __importDefault(require("./modules/siteSetting/travelProposal/travelProposal.routes"));
 const package_routes_1 = __importDefault(require("./modules/package/package.routes"));
+const upload_routes_1 = __importDefault(require("./modules/uploads/upload.routes"));
 const app = (0, express_1.default)();
 function normalizeOrigin(origin) {
     return origin.trim().replace(/\/$/, "");
@@ -63,6 +64,7 @@ app.use("/api/sections", section_routes_1.default);
 app.use("/api/reviews", review_routes_1.default);
 app.use("/api/travel-proposals", travelProposal_routes_1.default);
 app.use("/api/packages", package_routes_1.default);
+app.use("/api/uploads", upload_routes_1.default);
 console.log("[TravelProposal][Backend] route mounted at /api/travel-proposals");
 app.use("/api-docs", swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.swaggerSpec));
 app.get("/", (req, res) => res.send("Welcome to API"));

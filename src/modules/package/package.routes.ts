@@ -6,6 +6,7 @@ import { roleMiddleware } from "../../common/middleware/roleMiddleware";
 const router = Router();
 
 router.get("/", ctrl.listPackages);
+router.get("/slug/:slug", ctrl.getPackageBySlug);
 router.get("/:id", ctrl.getPackage);
 
 router.post("/", authMiddleware, roleMiddleware("admin"), ctrl.createPackage);

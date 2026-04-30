@@ -86,7 +86,7 @@ const PackageSchema = new Schema<IPackage>(
     shortDescription: String,
     fullDescription: String,
     destinationsDetailed: { type: [DestinationDetailedSchema], default: [] },
-      // only keep destinationsDetailed (other complex lists removed)
+    // only keep destinationsDetailed (other complex lists removed)
     highlights: { type: [String], default: [] },
     mainImage: String,
     gallery: { type: [String], default: [] },
@@ -98,12 +98,12 @@ const PackageSchema = new Schema<IPackage>(
       included: { type: [String], default: [] },
       excluded: { type: [String], default: [] },
     },
-      gettingThere: {
-        description: String,
-      },
-      // customization fields removed
-      isActive: { type: Boolean, default: true },
-      // createdByAdmin removed
+    gettingThere: {
+      description: String,
+    },
+    // customization fields removed
+    isActive: { type: Boolean, default: true },
+    // createdByAdmin removed
   },
   { timestamps: true }
 );

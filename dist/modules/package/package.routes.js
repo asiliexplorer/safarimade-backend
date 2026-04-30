@@ -39,6 +39,7 @@ const authMiddleware_1 = require("../../common/middleware/authMiddleware");
 const roleMiddleware_1 = require("../../common/middleware/roleMiddleware");
 const router = (0, express_1.Router)();
 router.get("/", ctrl.listPackages);
+router.get("/slug/:slug", ctrl.getPackageBySlug);
 router.get("/:id", ctrl.getPackage);
 router.post("/", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), ctrl.createPackage);
 router.patch("/:id", authMiddleware_1.authMiddleware, (0, roleMiddleware_1.roleMiddleware)("admin"), ctrl.patchPackage);

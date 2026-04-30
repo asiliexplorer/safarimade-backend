@@ -13,6 +13,7 @@ import sectionRoutes from "./modules/siteSetting/sections/section.routes";
 import reviewRoutes from "./modules/siteSetting/reviews/review.routes";
 import travelProposalRoutes from "./modules/siteSetting/travelProposal/travelProposal.routes";
 import packageRoutes from "./modules/package/package.routes";
+import uploadRoutes from "./modules/uploads/upload.routes";
 
 const app = express();
 
@@ -69,6 +70,7 @@ app.use("/api/sections", sectionRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/travel-proposals", travelProposalRoutes);
 app.use("/api/packages", packageRoutes);
+app.use("/api/uploads", uploadRoutes);
 console.log("[TravelProposal][Backend] route mounted at /api/travel-proposals");
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.get("/", (req, res) => res.send("Welcome to API"));

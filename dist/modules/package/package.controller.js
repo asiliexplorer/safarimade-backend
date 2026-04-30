@@ -36,27 +36,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.createPackage = createPackage;
 exports.listPackages = listPackages;
 exports.getPackage = getPackage;
+exports.getPackageBySlug = getPackageBySlug;
 exports.patchPackage = patchPackage;
 exports.removePackage = removePackage;
 const packageService = __importStar(require("./package.service"));
 async function createPackage(req, res) {
-    const payload = {
-        ...req.body,
-        createdByAdmin: true,
-    };
+    const payload = { ...req.body };
     console.log("[PackageController] createPackage payload:", payload);
     const created = await packageService.createPackage(payload);
     res.status(201).json({ success: true, data: created });
 }
 async function listPackages(req, res) {
-    const { page, limit, search, category, isActive, createdByAdmin, sortBy, sortOrder } = req.query;
+    const { page, limit, search, category, isActive, sortBy, sortOrder } = req.query;
     const data = await packageService.listPackages({
         page: page ? Number(page) : 1,
         limit: limit ? Number(limit) : 10,
         search: typeof search === "string" ? search : undefined,
         category: typeof category === "string" ? category : undefined,
         isActive: typeof isActive === "string" ? isActive : undefined,
-        createdByAdmin: typeof createdByAdmin === "string" ? createdByAdmin : undefined,
         sortBy: typeof sortBy === "string" ? sortBy : undefined,
         sortOrder: sortOrder === "asc" || sortOrder === "desc" ? sortOrder : undefined,
     });
@@ -64,6 +61,13 @@ async function listPackages(req, res) {
 }
 async function getPackage(req, res) {
     const data = await packageService.getPackageById(req.params.id);
+    if (!data) {
+        return res.status(404).json({ success: false, message: "Package not found" });
+    }
+    res.json({ success: true, data });
+}
+async function getPackageBySlug(req, res) {
+    const data = await packageService.getPackageBySlug(req.params.slug);
     if (!data) {
         return res.status(404).json({ success: false, message: "Package not found" });
     }

@@ -1,5 +1,77 @@
 import mongoose from "mongoose";
-import { IPackage, PackageModel } from "./package.model";
+import { IPackage, PackageModel } from "./package.schema";
+
+const DEFAULT_OFFERED_BY = "Asili Explorer Safaris";
+const PACKAGE_COUNTER_ID = "package-id";
+
+const PackageCounterSchema = new mongoose.Schema(
+  {
+    _id: { type: String, required: true },
+    seq: { type: Number, default: 0 },
+  },
+  { versionKey: false }
+);
+
+const PackageCounterModel =
+  mongoose.models.PackageCounter || mongoose.model("PackageCounter", PackageCounterSchema);
+
+function makeSlug(value: string) {
+  return String(value)
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function isPositiveInteger(value: unknown) {
+  return Number.isInteger(value) && Number(value) > 0;
+}
+
+function buildPackageQuery(identifier: string) {
+  if (mongoose.Types.ObjectId.isValid(identifier)) {
+    return { _id: new mongoose.Types.ObjectId(identifier) };
+  }
+
+  const numericId = Number(identifier);
+  if (isPositiveInteger(numericId)) {
+    return { id: numericId };
+  }
+
+  return null;
+}
+
+async function syncPackageIdFloor(id: number) {
+  await PackageCounterModel.findByIdAndUpdate(
+    PACKAGE_COUNTER_ID,
+    { $max: { seq: id } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+}
+
+async function getNextPackageId() {
+  const counter = await PackageCounterModel.findByIdAndUpdate(
+    PACKAGE_COUNTER_ID,
+    { $inc: { seq: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true }
+  );
+
+  return counter?.seq || 1;
+}
+
+async function ensurePackageIdAvailable(id: number, excludeId?: string) {
+  const query: Record<string, unknown> = { id };
+  if (excludeId && mongoose.Types.ObjectId.isValid(excludeId)) {
+    query._id = { $ne: new mongoose.Types.ObjectId(excludeId) };
+  }
+
+  const existing = await PackageModel.exists(query);
+  if (existing) {
+    const error: any = new Error(`Package ID ${id} already exists`);
+    error.status = 400;
+    throw error;
+  }
+}
 
 type ListPackageOptions = {
   page?: number;
@@ -7,13 +79,25 @@ type ListPackageOptions = {
   search?: string;
   category?: string;
   isActive?: string;
-  createdByAdmin?: string;
   sortBy?: string;
   sortOrder?: "asc" | "desc";
 };
 
 export async function createPackage(payload: Partial<IPackage>) {
-  return PackageModel.create(payload);
+  const nextPayload = { ...payload } as Partial<IPackage>;
+  const preferredId = Number(nextPayload.id);
+
+  nextPayload.offeredBy = String(nextPayload.offeredBy || DEFAULT_OFFERED_BY).trim() || DEFAULT_OFFERED_BY;
+
+  if (isPositiveInteger(preferredId)) {
+    await ensurePackageIdAvailable(preferredId);
+    nextPayload.id = preferredId;
+    await syncPackageIdFloor(preferredId);
+  } else {
+    nextPayload.id = await getNextPackageId();
+  }
+
+  return PackageModel.create(nextPayload);
 }
 
 export async function listPackages(options: ListPackageOptions) {
@@ -30,19 +114,17 @@ export async function listPackages(options: ListPackageOptions) {
   if (options.isActive === "true") filter.isActive = true;
   if (options.isActive === "false") filter.isActive = false;
 
-  if (options.createdByAdmin === "true") filter.createdByAdmin = true;
-  if (options.createdByAdmin === "false") filter.createdByAdmin = false;
-
   if (options.search && options.search.trim()) {
     const search = options.search.trim();
     const regex = new RegExp(search, "i");
     filter.$or = [
       { name: regex },
+      { slug: regex },
+      { travelStyle: regex },
       { shortDescription: regex },
       { fullDescription: regex },
-      { offeredBy: regex },
-      { tourOperator: regex },
-      { destinations: regex },
+      { experienceSummary: regex },
+      { "destinationsDetailed.place": regex },
     ];
   }
 
@@ -67,16 +149,53 @@ export async function listPackages(options: ListPackageOptions) {
 }
 
 export async function getPackageById(id: string) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return PackageModel.findById(id).lean();
+  const query = buildPackageQuery(id);
+  if (!query) return null;
+  return PackageModel.findOne(query).lean();
+}
+
+export async function getPackageBySlug(slug: string) {
+  if (!slug) return null;
+  return PackageModel.findOne({ slug }).lean();
 }
 
 export async function updatePackageById(id: string, payload: Partial<IPackage>) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return PackageModel.findByIdAndUpdate(id, payload, { new: true, runValidators: true }).lean();
+  const query = buildPackageQuery(id);
+  if (!query) return null;
+
+  const current = (await PackageModel.findOne(query).select("id").lean()) as { id?: number } | null;
+  if (!current) return null;
+
+  const nextPayload = { ...payload } as Partial<IPackage>;
+  if (nextPayload.name && !nextPayload.slug) {
+    nextPayload.slug = makeSlug(nextPayload.name);
+  }
+
+  if (nextPayload.offeredBy !== undefined) {
+    nextPayload.offeredBy = String(nextPayload.offeredBy).trim() || DEFAULT_OFFERED_BY;
+  }
+
+  if (nextPayload.id !== undefined) {
+    const preferredId = Number(nextPayload.id);
+    if (!isPositiveInteger(preferredId)) {
+      const error: any = new Error("Package ID must be a positive number");
+      error.status = 400;
+      throw error;
+    }
+
+    if (Number(current.id) !== preferredId) {
+      await ensurePackageIdAvailable(preferredId, id);
+      await syncPackageIdFloor(preferredId);
+    }
+
+    nextPayload.id = preferredId;
+  }
+
+  return PackageModel.findOneAndUpdate(query, nextPayload, { new: true, runValidators: true }).lean();
 }
 
 export async function deletePackageById(id: string) {
-  if (!mongoose.Types.ObjectId.isValid(id)) return null;
-  return PackageModel.findByIdAndDelete(id);
+  const query = buildPackageQuery(id);
+  if (!query) return null;
+  return PackageModel.findOneAndDelete(query);
 }
